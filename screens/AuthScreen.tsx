@@ -12,7 +12,6 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -30,24 +29,50 @@ const AuthScreen = () => {
 
   const handleAuth = async () => {
     setLoading(true);
-    const action = isLogin ? supabase.auth.signInWithPassword : supabase.auth.signUp;
-    const { data, error } = await action({ email, password });
+
+    try {
+      // Check internet connection
+      const test = await fetch('https://jsonplaceholder.typicode.com/posts/1');
+      await test.json();
+    } catch (err: any) {
+      console.log('❌ INTERNET FAIL:', err.message);
+      Alert.alert('Internet Error', 'Could not connect to any server.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('https://auyunzaccsixnnegdusu.supabase.co/auth/v1/' + (isLogin ? 'token?grant_type=password' : 'signup'), {
+        method: 'POST',
+        headers: {
+          apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1eXVuemFjY3NpeG5uZWdkdXN1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExNzI4MzMsImV4cCI6MjA2Njc0ODgzM30.uIH2W6DywpDoaOBaKBClzuKUNh90UKEcQcEH4mloBN4',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const result = await res.json();
+      console.log('✅ AUTH RESULT:', result);
+
+      if (!res.ok) {
+        throw new Error(result.error_description || result.msg || 'Authentication failed');
+      }
+
+      Alert.alert('Success 💖', isLogin ? 'Logged in!' : 'Account created!');
+      navigation.navigate('DailyJournal');
+    } catch (err: any) {
+      console.log('❌ SUPABASE ERROR:', err.message);
+      Alert.alert('Supabase Error', err.message);
+    }
 
     setLoading(false);
-
-    if (error) {
-      Alert.alert('Oops!', error.message);
-    } else {
-      Alert.alert('Success 💖', isLogin ? 'Logged in!' : 'Account created!');
-      navigation.navigate('DailyJournal'); // Go to journal screen
-    }
   };
 
   return (
-    <LinearGradient
-      colors={['#FFE4E1', '#FFF0F5']}
-      style={styles.container}
-    >
+    <LinearGradient colors={['#FFE4E1', '#FFF0F5']} style={styles.container}>
       <Image
         source={{ uri: 'https://i.imgur.com/VKZsmZb.gif' }}
         style={styles.animatedHeart}
