@@ -8,6 +8,7 @@ import {
   Dimensions,
   Image,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -21,9 +22,19 @@ const moodOptions = [
   { emoji: '🤩', label: 'Excited' },
 ];
 
+const stickerList = [
+  { id: 'heart', source: require('../assets/stickers/heart.png') },
+  { id: 'sparkle', source: require('../assets/stickers/sparkle.png') },
+  { id: 'star', source: require('../assets/stickers/star.png') },
+  { id: 'ribbon', source: require('../assets/stickers/ribbon.png') },
+  { id: 'strawberry', source: require('../assets/stickers/strawberry.png') },
+  { id: 'teddy', source: require('../assets/stickers/teddy.png') },
+];
+
 const DailyJournalScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -32,6 +43,14 @@ const DailyJournalScreen = () => {
       useNativeDriver: true,
     }).start();
   }, []);
+
+  const toggleSticker = (id: string) => {
+    setSelectedStickers((prev) =>
+      prev.includes(id)
+        ? prev.filter((s) => s !== id)
+        : [...prev, id]
+    );
+  };
 
   return (
     <ImageBackground
@@ -65,11 +84,29 @@ const DailyJournalScreen = () => {
             })}
           </View>
 
-          {/* Cute sticker gif */}
-          <Image
-            source={{ uri: 'https://emoji.gg/assets/emoji/8024-kirbyheart.gif' }}
-            style={styles.sticker}
-          />
+          {/* Sticker Picker */}
+          <Text style={styles.subTitle}>Pick your cute stickers 💖</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.stickerRow}
+          >
+            {stickerList.map((sticker) => {
+              const isSelected = selectedStickers.includes(sticker.id);
+              return (
+                <TouchableOpacity
+                  key={sticker.id}
+                  onPress={() => toggleSticker(sticker.id)}
+                  style={[
+                    styles.stickerWrap,
+                    isSelected && styles.selectedSticker,
+                  ]}
+                >
+                  <Image source={sticker.source} style={styles.stickerImage} />
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </Animated.View>
       </LinearGradient>
     </ImageBackground>
@@ -104,14 +141,15 @@ const styles = StyleSheet.create({
     textShadowRadius: 8,
   },
   subTitle: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#DB7093',
-    marginBottom: 10,
+    marginTop: 10,
+    marginBottom: 6,
   },
   moodRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     flexWrap: 'wrap',
   },
   moodButton: {
@@ -124,7 +162,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 4,
-    transform: [{ scale: 1 }],
   },
   selectedMood: {
     backgroundColor: '#FFB6C1',
@@ -133,9 +170,24 @@ const styles = StyleSheet.create({
   moodEmoji: {
     fontSize: 30,
   },
-  sticker: {
-    width: screenWidth * 0.25,
-    height: screenWidth * 0.25,
+  stickerRow: {
     marginTop: 10,
+    maxHeight: 90,
+  },
+  stickerWrap: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginHorizontal: 6,
+    padding: 10,
+    elevation: 4,
+  },
+  selectedSticker: {
+    borderColor: '#FF69B4',
+    borderWidth: 2,
+  },
+  stickerImage: {
+    width: 50,
+    height: 50,
+    resizeMode: 'contain',
   },
 });
