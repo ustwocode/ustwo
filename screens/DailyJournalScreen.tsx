@@ -9,8 +9,10 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -35,6 +37,8 @@ const DailyJournalScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  const [entryDate, setEntryDate] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -46,11 +50,21 @@ const DailyJournalScreen = () => {
 
   const toggleSticker = (id: string) => {
     setSelectedStickers((prev) =>
-      prev.includes(id)
-        ? prev.filter((s) => s !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
   };
+
+  const handleDateChange = (event: any, selected: Date | undefined) => {
+    setShowDatePicker(false);
+    if (selected) setEntryDate(selected);
+  };
+
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
 
   return (
     <ImageBackground
@@ -102,11 +116,30 @@ const DailyJournalScreen = () => {
                     isSelected && styles.selectedSticker,
                   ]}
                 >
-                  <Image source={sticker.source} style={styles.stickerImage} />
+                  <Image
+                    source={sticker.source}
+                    style={styles.stickerImage}
+                  />
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
+
+          {/* Date Picker */}
+          <Text style={styles.subTitle}>📅 Entry for: {formatDate(entryDate)}</Text>
+          <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.dateButton}>
+            <Text style={styles.dateButtonText}>Change Date</Text>
+          </TouchableOpacity>
+
+          {showDatePicker && (
+            <DateTimePicker
+              value={entryDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+              onChange={handleDateChange}
+              maximumDate={new Date()}
+            />
+          )}
         </Animated.View>
       </LinearGradient>
     </ImageBackground>
@@ -116,21 +149,14 @@ const DailyJournalScreen = () => {
 export default DailyJournalScreen;
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    resizeMode: 'cover',
-  },
+  background: { flex: 1, resizeMode: 'cover' },
   gradient: {
     flex: 1,
     paddingHorizontal: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
+  container: { alignItems: 'center', width: '100%' },
   title: {
     fontSize: 32,
     color: '#FF69B4',
@@ -143,14 +169,14 @@ const styles = StyleSheet.create({
   subTitle: {
     fontSize: 18,
     color: '#DB7093',
-    marginTop: 10,
+    marginTop: 12,
     marginBottom: 6,
   },
   moodRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
     flexWrap: 'wrap',
+    marginBottom: 10,
   },
   moodButton: {
     backgroundColor: '#fff',
@@ -163,17 +189,9 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
-  selectedMood: {
-    backgroundColor: '#FFB6C1',
-    transform: [{ scale: 1.2 }],
-  },
-  moodEmoji: {
-    fontSize: 30,
-  },
-  stickerRow: {
-    marginTop: 10,
-    maxHeight: 90,
-  },
+  selectedMood: { backgroundColor: '#FFB6C1', transform: [{ scale: 1.2 }] },
+  moodEmoji: { fontSize: 30 },
+  stickerRow: { marginTop: 10, maxHeight: 90 },
   stickerWrap: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -185,9 +203,16 @@ const styles = StyleSheet.create({
     borderColor: '#FF69B4',
     borderWidth: 2,
   },
-  stickerImage: {
-    width: 50,
-    height: 50,
-    resizeMode: 'contain',
+  stickerImage: { width: 50, height: 50, resizeMode: 'contain' },
+  dateButton: {
+    backgroundColor: '#FF69B4',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  dateButtonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
